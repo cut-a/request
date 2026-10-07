@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- REQUEST の入口（ホーム画面のアイコン用）  第1.0版  2026-10-07
+     iPhone のホーム画面は、このページの apple-touch-icon を使う。開くとすぐ REQUEST（Apps Script）に移る。
+     置き方：このフォルダの3つのファイル（index.html・apple-touch-icon.png・icon-512.png）を同じ場所に置き、下の 行き先 を REQUEST の URL（…/exec）にする。
+     個人の情報は入れない。入った印（k）はアドレスで受け取り、そのまま REQUEST に渡すだけ（どこにも書かない）。 -->
+<title>REQUEST</title>
+<meta name="apple-mobile-web-app-title" content="REQUEST">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@87.5,700&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#22252a; --sub:#6b7078; --line:#dddad3; --band:#111; --bandink:#f2f2f2; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1e2024; --card:#26292e; --ink:#e8e6e1; --sub:#a2a6ad; --line:#3a3d43; color-scheme:dark; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:'BIZ UDPGothic', 'Hiragino Kaku Gothic ProN', Meiryo, system-ui, sans-serif; font-size:16px; line-height:1.6; }
+  header { background:var(--band); color:var(--bandink); padding:12px 16px; display:flex; align-items:center; gap:10px; }
+  .bname { font-family:'Archivo', 'Arial Narrow', sans-serif; font-weight:700; font-stretch:87.5%; letter-spacing:.07em; font-size:19px; line-height:1.1; }
+  .bdesc { font-size:12px; opacity:.7; }
+  main { max-width:520px; margin:0 auto; padding:16px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; }
+  h1 { font-size:18px; margin:0 0 10px; }
+  .icon { display:block; width:96px; height:96px; border-radius:22px; margin:4px auto 14px; }
+  ol { margin:0; padding-left:1.4em; } li { margin:6px 0; }
+  .hint { color:var(--sub); font-size:13px; margin:12px 0 0; }
+  a.go { display:inline-block; margin-top:14px; padding:10px 18px; border-radius:6px; background:#2f5d8a; color:#fff; font-weight:700; text-decoration:none; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" d="M3 14h5l1.5 3h5l1.5-3h5v7H3z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" d="M12 12V4.5M8 7l4-4 4 4"/></svg>
+  <div><div class="bname">REQUEST</div><div class="bdesc">本部への依頼</div></div>
+</header>
+<main>
+  <section id="moving" class="hidden"><h1>REQUEST を開いています…</h1><p class="hint">開かないときは <a id="goLink" href="#">ここを押してください</a>。</p></section>
+  <section id="add" class="hidden">
+    <img class="icon" src="apple-touch-icon.png" alt="">
+    <h1>ホーム画面に REQUEST を置く</h1>
+    <ol>
+      <li>下の <b>共有</b>（四角から上向きの矢印）を押す。</li>
+      <li><b>「ホーム画面に追加」</b>を押す。</li>
+      <li>右上の <b>「追加」</b>を押す。</li>
+    </ol>
+    <p class="hint" id="keyNote">このアイコンから開くと、番号を入れずに入れます（入ったままの期間のあいだ）。このページのアドレスは人に送らないでください。</p>
+    <p class="hint">Android は、Chrome の右上の「︙」→「ホーム画面に追加」です。</p>
+    <a class="go" id="openNow" href="#">いま REQUEST を開く</a>
+  </section>
+</main>
+<script>
+// REQUEST の URL（Apps Script のウェブアプリ、…/exec）。横川さんが入れる
+const 行き先 = 'https://script.google.com/macros/s/AKfycbxRrVQzW1s24v38QOx9fRRz5fXNzDLQghkmF0ieS3s91twU8MPzUNTXTrF_COatudtJFQ/exec';
+
+const q = new URLSearchParams(location.search);
+const k = (q.get('k') || '').replace(/[^0-9a-fA-F-]/g, '');   // 入った印（UUID の形だけ通す）
+const url = 行き先 + (k ? '?k=' + encodeURIComponent(k) : '');
+document.getElementById('goLink').href = url;
+document.getElementById('openNow').href = url;
+
+if (q.get('go') === '1') {
+  // ホーム画面のアイコンから開いたとき：すぐ REQUEST へ
+  document.getElementById('moving').classList.remove('hidden');
+  location.replace(url);
+} else {
+  // REQUEST の「ホーム画面に置く」から来たとき：アドレスを ?go=1 にしてから、置き方を見せる（ホーム画面はこのアドレスを覚える）
+  const n = new URLSearchParams(); n.set('go', '1'); if (k) n.set('k', k);
+  history.replaceState(null, '', location.pathname + '?' + n.toString());
+  document.getElementById('add').classList.remove('hidden');
+  if (!k) document.getElementById('keyNote').textContent = 'このアイコンから開くと REQUEST が開きます。';
+}
+</script>
+</body>
+</html>
